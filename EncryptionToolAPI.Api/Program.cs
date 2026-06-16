@@ -14,7 +14,29 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddOpenApiDocument(config =>
+{
+    config.DocumentName = "v1";
+    config.Title = "EncryptionToolAPI";
+    config.Version = "v1";
+    
+    config.AddSecurity("ApiKey", System.Linq.Enumerable.Empty<string>(), new NSwag.OpenApiSecurityScheme
+    {
+        Type = NSwag.OpenApiSecuritySchemeType.ApiKey,
+        Name = "X-Api-Key",
+        In = NSwag.OpenApiSecurityApiKeyLocation.Header,
+        Description = "Client API Key"
+    });
+    
+    config.AddSecurity("AdminKey", System.Linq.Enumerable.Empty<string>(), new NSwag.OpenApiSecurityScheme
+    {
+        Type = NSwag.OpenApiSecuritySchemeType.ApiKey,
+        Name = "X-Admin-Key",
+        In = NSwag.OpenApiSecurityApiKeyLocation.Header,
+        Description = "Admin Key for /api/v1/admin endpoints"
+    });
+});
 
 // FluentValidation
 builder.Services.AddFluentValidationAutoValidation();
@@ -33,7 +55,8 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseOpenApi();
+    app.UseSwaggerUi();
 }
 
 app.UseHttpsRedirection();

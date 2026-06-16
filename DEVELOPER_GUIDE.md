@@ -88,7 +88,16 @@ Start the API by running:
 dotnet run --project EncryptionToolAPI.Api
 ```
 
-### Step 4: Run the Tests
+### Step 4: Testing the API via Swagger UI
+Once the application is running, you can interact with it using the built-in Swagger interface:
+
+1. Navigate to `https://localhost:<port>/swagger` in your browser.
+2. **Authorize as Admin**: Click the **Authorize** button at the top right. Under the **AdminKey** section, enter the admin key (e.g., `default-admin-key-change-me` or what you set) and click Authorize.
+3. **Create a Client**: Scroll down to `POST /api/v1/admin/clients`. Click "Try it out", enter a client name, and click Execute. Copy the `ApiKey` returned in the response body.
+4. **Authorize as Client**: Click the **Authorize** button again. Under the **ApiKey** section, paste the key you just copied.
+5. **Test Cryptography**: You can now successfully use the `POST /api/v1/crypto/encrypt` and `POST /api/v1/crypto/decrypt` endpoints without getting Unauthorized errors.
+
+### Step 5: Run the Unit Tests
 To ensure the cryptographic services are working perfectly on the host machine:
 ```bash
 dotnet test EncryptionToolAPI.Tests

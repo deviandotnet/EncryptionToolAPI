@@ -10,12 +10,18 @@ using System.Threading.Tasks;
 
 namespace EncryptionToolAPI.BLL.Services
 {
+    /// <summary>
+    /// Implements <see cref="IKeyManagementService"/> to manage client applications and KEK/DEK patterns.
+    /// </summary>
     public class KeyManagementService : IKeyManagementService
     {
         private readonly EncryptionDbContext _dbContext;
         private readonly ICryptographyService _cryptographyService;
         private readonly string _masterKey;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="KeyManagementService"/> class.
+        /// </summary>
         public KeyManagementService(EncryptionDbContext dbContext, ICryptographyService cryptographyService, IConfiguration configuration)
         {
             _dbContext = dbContext;
@@ -23,6 +29,7 @@ namespace EncryptionToolAPI.BLL.Services
             _masterKey = configuration["MasterKey"] ?? throw new ArgumentNullException("MasterKey is missing in configuration.");
         }
 
+        /// <inheritdoc/>
         public async Task<(ClientApplication Client, string RawApiKey)> CreateClientAsync(string name)
         {
             var rawApiKey = GenerateApiKey();
@@ -44,6 +51,7 @@ namespace EncryptionToolAPI.BLL.Services
             return (client, rawApiKey);
         }
 
+        /// <inheritdoc/>
         public async Task<(string Dek, Guid ClientId)?> GetClientDataKeyAsync(string apiKey)
         {
             var hash = HashApiKey(apiKey);
@@ -58,6 +66,7 @@ namespace EncryptionToolAPI.BLL.Services
             return (decryptedDek, client.Id);
         }
 
+        /// <inheritdoc/>
         public async Task<bool> RotateClientKeyAsync(string clientId)
         {
             if (!Guid.TryParse(clientId, out var id)) return false;
@@ -73,6 +82,9 @@ namespace EncryptionToolAPI.BLL.Services
             return true;
         }
 
+        /// <summary>
+        /// Generates a random 256-bit API key.
+        /// </summary>
         private string GenerateApiKey()
         {
             var bytes = new byte[32];
@@ -80,6 +92,9 @@ namespace EncryptionToolAPI.BLL.Services
             return Convert.ToBase64String(bytes);
         }
 
+        /// <summary>
+        /// Computes a SHA-256 hash of the provided API key.
+        /// </summary>
         private string HashApiKey(string apiKey)
         {
             using var sha256 = SHA256.Create();

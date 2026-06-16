@@ -5,6 +5,9 @@ using System.Text;
 
 namespace EncryptionToolAPI.BLL.Services
 {
+    /// <summary>
+    /// Implements <see cref="ICryptographyService"/> using AES-GCM for authenticated encryption.
+    /// </summary>
     public class CryptographyService : ICryptographyService
     {
         // 12 bytes is the standard IV size for AES-GCM
@@ -12,6 +15,7 @@ namespace EncryptionToolAPI.BLL.Services
         // 16 bytes tag size
         private const int TagSize = 16;
 
+        /// <inheritdoc/>
         public string GenerateKey()
         {
             var key = new byte[32]; // 256 bits
@@ -19,6 +23,7 @@ namespace EncryptionToolAPI.BLL.Services
             return Convert.ToBase64String(key);
         }
 
+        /// <inheritdoc/>
         public string Encrypt(string plaintext, string base64Key)
         {
             var key = Convert.FromBase64String(base64Key);
@@ -44,6 +49,7 @@ namespace EncryptionToolAPI.BLL.Services
             return Convert.ToBase64String(combined);
         }
 
+        /// <inheritdoc/>
         public string Decrypt(string ciphertext, string base64Key)
         {
             var key = Convert.FromBase64String(base64Key);

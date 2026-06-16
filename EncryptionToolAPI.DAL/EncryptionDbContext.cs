@@ -3,15 +3,29 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EncryptionToolAPI.DAL
 {
+    /// <summary>
+    /// The Entity Framework Core database context for the Encryption Tool API.
+    /// </summary>
     public class EncryptionDbContext : DbContext
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EncryptionDbContext"/> class.
+        /// </summary>
         public EncryptionDbContext(DbContextOptions<EncryptionDbContext> options) : base(options)
         {
         }
 
+        /// <summary>
+        /// Gets or sets the DbSet for client applications.
+        /// </summary>
         public DbSet<ClientApplication> ClientApplications { get; set; }
+
+        /// <summary>
+        /// Gets or sets the DbSet for audit logs.
+        /// </summary>
         public DbSet<AuditLog> AuditLogs { get; set; }
 
+        /// <inheritdoc/>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

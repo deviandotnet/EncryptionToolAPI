@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 
 namespace EncryptionToolAPI.Api.Controllers
 {
+    /// <summary>
+    /// Controller for handling cryptographic operations (encryption and decryption).
+    /// </summary>
     [ApiController]
     [Route("api/v1/crypto")]
     public class EncryptionController : ControllerBase
@@ -15,12 +18,18 @@ namespace EncryptionToolAPI.Api.Controllers
         private readonly ICryptographyService _cryptographyService;
         private readonly EncryptionDbContext _dbContext;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EncryptionController"/> class.
+        /// </summary>
         public EncryptionController(ICryptographyService cryptographyService, EncryptionDbContext dbContext)
         {
             _cryptographyService = cryptographyService;
             _dbContext = dbContext;
         }
 
+        /// <summary>
+        /// Encrypts the provided plaintext using the client's Data Encryption Key (DEK).
+        /// </summary>
         [HttpPost("encrypt")]
         public async Task<IActionResult> Encrypt([FromBody] EncryptRequest request)
         {
@@ -52,6 +61,9 @@ namespace EncryptionToolAPI.Api.Controllers
             }
         }
 
+        /// <summary>
+        /// Decrypts the provided ciphertext using the client's Data Encryption Key (DEK).
+        /// </summary>
         [HttpPost("decrypt")]
         public async Task<IActionResult> Decrypt([FromBody] DecryptRequest request)
         {
