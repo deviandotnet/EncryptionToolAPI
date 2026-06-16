@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="EncryptionToolAPI.Api/EncryptionToolAPI.Api.csproj" />
+  <Project Path="EncryptionToolAPI.BLL/EncryptionToolAPI.BLL.csproj" />
+  <Project Path="EncryptionToolAPI.DAL/EncryptionToolAPI.DAL.csproj" />
+  <Project Path="EncryptionToolAPI.Tests/EncryptionToolAPI.Tests.csproj" />
+</Solution>
