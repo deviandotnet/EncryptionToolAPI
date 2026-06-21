@@ -20,16 +20,20 @@ builder.Services.AddOpenApiDocument(config =>
     config.DocumentName = "v1";
     config.Title = "EncryptionToolAPI";
     config.Version = "v1";
-    
-    config.AddSecurity("ApiKey", System.Linq.Enumerable.Empty<string>(), new NSwag.OpenApiSecurityScheme
+
+    // NSwag auto-reads the XML doc file from the output directory when
+    // GenerateDocumentationFile=true is set in the .csproj.
+    // This surfaces all /// <summary> comments in the Swagger UI.
+
+    config.AddSecurity("ApiKey", Enumerable.Empty<string>(), new NSwag.OpenApiSecurityScheme
     {
         Type = NSwag.OpenApiSecuritySchemeType.ApiKey,
         Name = "X-Api-Key",
         In = NSwag.OpenApiSecurityApiKeyLocation.Header,
         Description = "Client API Key"
     });
-    
-    config.AddSecurity("AdminKey", System.Linq.Enumerable.Empty<string>(), new NSwag.OpenApiSecurityScheme
+
+    config.AddSecurity("AdminKey", Enumerable.Empty<string>(), new NSwag.OpenApiSecurityScheme
     {
         Type = NSwag.OpenApiSecuritySchemeType.ApiKey,
         Name = "X-Admin-Key",

@@ -22,7 +22,7 @@ namespace EncryptionToolAPI.Api.Controllers
         public AdminController(IKeyManagementService keyManagementService, IConfiguration configuration)
         {
             _keyManagementService = keyManagementService;
-            _adminKey = configuration["AdminKey"] ?? "default-admin-key-change-me"; // Note: Provide via config
+            _adminKey = configuration["AdminKey"] ?? "YOUR_SECURE_ADMIN_PASSWORD"; // Note: Provide via config
         }
 
         /// <summary>
@@ -70,3 +70,11 @@ namespace EncryptionToolAPI.Api.Controllers
         }
     }
 }
+
+
+/*
+To generate sample master key:
+
+var key = System.Security.Cryptography.RandomNumberGenerator.GetBytes(32);
+Console.WriteLine(Convert.ToBase64String(key));
+ */
