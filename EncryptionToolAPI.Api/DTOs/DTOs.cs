@@ -1,5 +1,66 @@
 namespace EncryptionToolAPI.Api.DTOs
 {
+    // ─── Bulk DTOs ──────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Request object for bulk-encrypting multiple plaintext values in a single HTTP call.
+    /// The dictionary key is a caller-assigned Row ID (e.g., a database primary key string)
+    /// used solely for correlation; the API treats it as opaque and never interprets it.
+    /// The dictionary value is the plaintext to encrypt.
+    /// </summary>
+    public class BulkEncryptRequest
+    {
+        /// <summary>
+        /// A map of Row ID → plaintext values to encrypt.
+        /// Maximum 1,000 entries; each value must be non-empty.
+        /// </summary>
+        public Dictionary<string, string> Items { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Response object returned after a successful bulk encryption operation.
+    /// The dictionary key mirrors the Row ID sent in the request for easy client-side correlation.
+    /// The dictionary value is the resulting base64-encoded ciphertext (Nonce + Tag + CipherBytes).
+    /// </summary>
+    public class BulkEncryptResponse
+    {
+        /// <summary>
+        /// A map of Row ID → base64-encoded ciphertext values.
+        /// </summary>
+        public Dictionary<string, string> Results { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Request object for bulk-decrypting multiple ciphertext values in a single HTTP call.
+    /// The dictionary key is a caller-assigned Row ID used solely for response correlation.
+    /// The dictionary value is the base64-encoded ciphertext to decrypt.
+    /// </summary>
+    public class BulkDecryptRequest
+    {
+        /// <summary>
+        /// A map of Row ID → base64-encoded ciphertext values to decrypt.
+        /// Maximum 1,000 entries; each value must be non-empty.
+        /// If any single entry fails authentication (e.g., corrupted ciphertext),
+        /// the entire batch is rejected.
+        /// </summary>
+        public Dictionary<string, string> Items { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Response object returned after a successful bulk decryption operation.
+    /// The dictionary key mirrors the Row ID sent in the request for easy client-side correlation.
+    /// The dictionary value is the decrypted plaintext.
+    /// </summary>
+    public class BulkDecryptResponse
+    {
+        /// <summary>
+        /// A map of Row ID → decrypted plaintext values.
+        /// </summary>
+        public Dictionary<string, string> Results { get; set; } = new();
+    }
+
+    // ─── Single-Item DTOs ────────────────────────────────────────────────────────
+
     /// <summary>
     /// Request object for encrypting plaintext data.
     /// </summary>

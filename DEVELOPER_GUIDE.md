@@ -37,7 +37,7 @@ To fulfill the on-premise requirement securely:
 ### API Layer (`EncryptionToolAPI.Api`)
 - **`DTOs/DTOs.cs`**: Contains all Data Transfer Objects (Requests/Responses) for endpoints.
 - **`Middleware/ApiKeyMiddleware.cs`**: Intercepts requests to `/api/v1/crypto/*`. It extracts the `X-Api-Key` header, validates it via the BLL, and injects the decrypted DEK into the `HttpContext.Items` so the Controller can use it statelessly.
-- **`Controllers/EncryptionController.cs`**: Exposes `/encrypt` and `/decrypt` endpoints. Retrieves the DEK from the middleware context and calls the BLL to perform cryptography.
+- **`Controllers/EncryptionController.cs`**: Exposes `/encrypt`, `/decrypt`, `/encrypt/bulk`, and `/decrypt/bulk` endpoints. Retrieves the DEK from the middleware context and calls the BLL to perform cryptography.
 - **`Controllers/AdminController.cs`**: Exposes `/admin/clients` and `/admin/keys/rotate`. Protected by an `X-Admin-Key` header instead of a client API key.
 - **`Program.cs`**: Wires up Dependency Injection for the BLL services, configures EF Core with SQL Server, and adds the custom middleware.
 
@@ -96,9 +96,92 @@ Once the application is running, you can interact with it using the built-in Swa
 3. **Create a Client**: Scroll down to `POST /api/v1/admin/clients`. Click "Try it out", enter a client name, and click Execute. Copy the `ApiKey` returned in the response body.
 4. **Authorize as Client**: Click the **Authorize** button again. Under the **ApiKey** section, paste the key you just copied.
 5. **Test Cryptography**: You can now successfully use the `POST /api/v1/crypto/encrypt` and `POST /api/v1/crypto/decrypt` endpoints without getting Unauthorized errors.
+6. **Test Bulk Cryptography**: Use the `POST /api/v1/crypto/encrypt/bulk` and `POST /api/v1/crypto/decrypt/bulk` endpoints (see Section 6 for payload examples).
 
 ### Step 5: Run the Unit Tests
 To ensure the cryptographic services are working perfectly on the host machine:
 ```bash
 dotnet test EncryptionToolAPI.Tests
+```
+
+---
+
+## 6. Bulk Encryption & Decryption Endpoints
+
+These endpoints solve the **N+1 HTTP request bottleneck** for consumer applications that display encrypted rows in a datatable. Instead of one HTTP call per row, the client sends a single call with a batch payload.
+
+### Endpoints
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| POST | `/api/v1/crypto/encrypt/bulk` | Encrypt up to 1,000 plaintexts in one call |
+| POST | `/api/v1/crypto/decrypt/bulk` | Decrypt up to 1,000 ciphertexts in one call |
+
+Both endpoints require the `X-Api-Key` header just like the single-item endpoints.
+
+### Request / Response Shape
+
+The payload uses a `Dictionary<string, string>` where the **key is a caller-assigned Row ID** (e.g., your database primary key as a string) and the **value is the data** (plaintext or ciphertext). The Row ID is treated as an opaque correlation token by the API.
+
+**Bulk Encrypt Request:**
+```json
+{
+  "items": {
+    "1": "John Smith",
+    "2": "Jane Doe",
+    "3": "Acme Corp"
+  }
+}
+```
+
+**Bulk Encrypt Response:**
+```json
+{
+  "results": {
+    "1": "<base64-ciphertext-for-row-1>",
+    "2": "<base64-ciphertext-for-row-2>",
+    "3": "<base64-ciphertext-for-row-3>"
+  }
+}
+```
+
+**Bulk Decrypt Request:** (same structure, values are ciphertexts)
+```json
+{
+  "items": {
+    "1": "<base64-ciphertext-for-row-1>",
+    "2": "<base64-ciphertext-for-row-2>"
+  }
+}
+```
+
+### Security Properties
+
+- **DEK never leaves the server**: The client's Data Encryption Key is resolved from the API key by the middleware. It is never present in the request or response body.
+- **Atomic failure**: If *any single* ciphertext fails AES-GCM authentication (corrupted or tampered data), the **entire batch** is rejected with HTTP 400 and no partial plaintext is returned. This prevents an attacker from using a mixed batch to probe which rows are valid.
+- **DoS protection**: Requests exceeding **1,000 items** are rejected by FluentValidation before any cryptographic work is performed. Client applications with more rows must **chunk** their requests into pages of ≤1,000.
+- **Key length limits**: Row ID keys are capped at 200 characters by the validator to prevent log/header injection.
+
+### Audit Logging
+
+A single `AuditLog` row is written per bulk call (e.g., `Operation: "BulkDecrypt (Count: 50)"`) instead of one row per item. This eliminates a secondary write-amplification DoS vector and keeps the audit table manageable.
+
+### Client Integration Pattern (Datatable Example)
+
+```csharp
+// 1. Fetch encrypted rows from YOUR database
+var rows = await dbContext.MyTable.ToListAsync();
+
+// 2. Build the bulk decrypt payload: { RowId -> Ciphertext }
+var payload = new { items = rows.ToDictionary(r => r.Id.ToString(), r => r.EncryptedName) };
+
+// 3. One HTTP call to the EncryptionToolAPI
+var response = await httpClient.PostAsJsonAsync("/api/v1/crypto/decrypt/bulk", payload);
+var result = await response.Content.ReadFromJsonAsync<BulkDecryptResponse>();
+
+// 4. Map decrypted values back to rows using the Row ID as a key
+foreach (var row in rows)
+    row.DisplayName = result.Results[row.Id.ToString()];
+
+// 5. Bind rows to your datatable — all values are now readable
 ```
